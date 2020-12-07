@@ -58,6 +58,25 @@ let vertices_line_baloon = [
 
 let inidces_line_baloon = [0, 1, 2, 3, 4]
 
+const newArrow = (x, y, angle) => {
+  let arrow = {};
+  arrow.x = x;
+  arrow.y = y;
+  arrow.angle = angle;
+  arrow.getModelMatrix = () => {
+    let modelMatrix = m3.identity();
+    modelMatrix = m3.multiply(modelMatrix, Translate(arrow.x, arrow.y));
+    modelMatrix = m3.multiply(modelMatrix, Rotate(arrow.angle));
+    return modelMatrix;
+  }
+  arrow.update = (deltaTime) => {
+    arrow.x+= Math.cos(arrow.angle) * deltaTime;
+    arrow.y+=Math.sin(arrow.angle) * deltaTime;
+  }
+  return arrow;
+}
+
+
 let baloane = [];
 let timeToSpawnABallon = 1;
 
@@ -194,6 +213,8 @@ let angularStep = 0;
 let mouse_x = 0;
 let mouse_y = 0;
 
+let vectorArrow = [];
+
 var Update = function(now) {
   if(isNaN(now)) now=0
   now *= 0.001; 
@@ -216,14 +237,26 @@ var Update = function(now) {
      
   //console.log("angularStep " +angularStep + " coordx " + mouse_x + " coordy "  + mouse_y);
   
-//   canvas.onmouseup = function (ev){
-    
-// }
-
   modelMaxtrix = m3.identity();
   modelMaxtrix = m3.multiply(modelMaxtrix,Translate(arrow_x, arrow_y));
   modelMaxtrix = m3.multiply(modelMaxtrix, Rotate(angularStep))
   RenderMesh2D(arrow,modelMaxtrix);
+
+  canvas.onmouseup = function (ev){
+   let currentAngle = angularStep;
+   let nArrow = newArrow(arrow_x, arrow_y, currentAngle);
+   vectorArrow.push(nArrow);
+   console.log(vectorArrow);
+  }
+
+  vectorArrow.forEach(arrow => {
+    arrow.update(deltaTime);
+  });
+  vectorArrow.forEach(sageata => {
+    RenderMesh2D(arrow, sageata.getModelMatrix()); 
+  });
+  //console.log(vectorArrow);
+  
 
   //balon    
     timeToSpawnABallon -= deltaTime * 1.5;
