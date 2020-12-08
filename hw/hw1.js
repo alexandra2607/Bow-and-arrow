@@ -170,7 +170,7 @@ const addShuriken = (vectorShurikene, ySpawnPos, radius) => {
     }
   }
   shuriken.isOutofScreen = () => {
-    if (shuriken.x <= -5 || shuriken.hasCollided == true) 
+    if (shuriken.x <= -7 || shuriken.hasCollided == true) 
       return true;
     else 
       return false;
@@ -178,6 +178,9 @@ const addShuriken = (vectorShurikene, ySpawnPos, radius) => {
   vectorShurikene.push(shuriken);
 }
 
+
+//bow
+let bow = new Mesh2dBow('bow', [0,0,0], 0.75, 1.2);
 
 //arrow
 let arrow = new Mesh2DArrow('arrow', [0,0,0], vertices_arrow, indices_arrow);
@@ -222,8 +225,11 @@ const Rotate = function(radians)
 //const geometry = new THREE.FontGeometry("Hello There", {font: font, size: 80})
 var then = 0;
 
-let arrow_x = -5;
+let arrow_x = -6;
 let arrow_y = 0;
+
+let bow_x = -6;
+let bow_y = 0;
 
 let angularStep = 0;
 let mouse_x = 0;
@@ -250,6 +256,11 @@ var Update = function(now) {
     mouse_y = result.y;
     
   });
+
+  modelMaxtrix = m3.identity();
+  modelMaxtrix = m3.multiply(modelMaxtrix,Translate(bow_x, bow_y));
+  RenderMesh2D(bow,modelMaxtrix);
+
   
   modelMaxtrix = m3.identity();
   modelMaxtrix = m3.multiply(modelMaxtrix,Translate(arrow_x, arrow_y));
@@ -349,6 +360,9 @@ var Update = function(now) {
         ct ++;
         console.log("You hit a balloon -> 1 point. Your current score is: " + ct);
      }
+     if (ct >= 10 && scorBaloane ==1) {
+       console("Congratulations, you won!")
+     }
    }
  }
 
@@ -367,6 +381,9 @@ var Update = function(now) {
        ct += 2;
        console.log("You hit a shuriken -> 2 point. Your current score is: " + ct);
     }
+    if (ct >= 10 && scorShuriken ==1) {
+      console("Congratulations, you won!")
+    }
   }
 } 
   requestAnimationFrame(Update);
@@ -376,10 +393,12 @@ function onInputUpdate(event) {
 
     if (event.key == 'w') {
         arrow_y +=0.1;
+        bow_y +=0.1;
     }
 
     if (event.key == 's') {
         arrow_y -=0.1;
+        bow_y -=0.1;
     }
 
 }
