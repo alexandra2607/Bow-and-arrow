@@ -59,6 +59,7 @@ let vertices_line_baloon = [
 let inidces_line_baloon = [0, 1, 2, 3, 4];
 
 let ct = 0;
+let lifes = 3;
 
 const newArrow = (x, y, angle, radius) => {
   let arrow = {};
@@ -66,6 +67,7 @@ const newArrow = (x, y, angle, radius) => {
   arrow.y = y;
   arrow.angle = angle;
   arrow.radius = radius;
+  arrow.collide = false;
   arrow.getModelMatrix = () => {
     let modelMatrix = m3.identity();
     modelMatrix = m3.multiply(modelMatrix, Translate(arrow.x, arrow.y));
@@ -78,10 +80,12 @@ const newArrow = (x, y, angle, radius) => {
   }
   arrow.isOutofScreen = () =>
   {
-    if(arrow.x > window.screen.availWidth || arrow.y > window.screen.availHeight)
+    if(arrow.x >= window.screen.availWidth || arrow.y >= window.screen.availHeight || arrow.collide == true) {
       return true;
-    else
+    }
+    else {
       return false;   
+    }
   }
   return arrow;
 }
@@ -111,7 +115,6 @@ const addBalloon = (vectorBaloane, xSpawnPos, radius) => {
       modelMatrix = m3.multiply(modelMatrix,Scale(xScale - 0.65, yScale - 0.65));
       return modelMatrix;  
     }
-    // console.log(modelMatrix)
   }
   balon.update = (deltaTimeSeconds, name) => {
     if(balon.hasCollided){
@@ -127,7 +130,7 @@ const addBalloon = (vectorBaloane, xSpawnPos, radius) => {
     }
   }
   balon.isOutofScreen = () => {
-    if(balon.y > 5 || balon.y < 0)
+    if(balon.y > 5 || balon.y < 0 || balon.hasCollided == true)
 	    return true;
 	  else
 	    return false;
@@ -167,7 +170,7 @@ const addShuriken = (vectorShurikene, ySpawnPos, radius) => {
     }
   }
   shuriken.isOutofScreen = () => {
-    if (shuriken.x > 30 || shuriken.y < 10) 
+    if (shuriken.x <= -5 || shuriken.hasCollided == true) 
       return true;
     else 
       return false;
@@ -175,7 +178,6 @@ const addShuriken = (vectorShurikene, ySpawnPos, radius) => {
   vectorShurikene.push(shuriken);
 }
 
-var circle_baloon 
 
 //arrow
 let arrow = new Mesh2DArrow('arrow', [0,0,0], vertices_arrow, indices_arrow);
@@ -248,8 +250,6 @@ var Update = function(now) {
     mouse_y = result.y;
     
   });
-     
-  //console.log("angularStep " +angularStep + " coordx " + mouse_x + " coordy "  + mouse_y);
   
   modelMaxtrix = m3.identity();
   modelMaxtrix = m3.multiply(modelMaxtrix,Translate(arrow_x, arrow_y));
@@ -260,7 +260,6 @@ var Update = function(now) {
    let currentAngle = angularStep;
    let nArrow = newArrow(arrow_x, arrow_y, currentAngle, 0.70);
    vectorArrow.push(nArrow);
-   //console.log(vectorArrow);
   }
 
   vectorArrow.forEach(arrow => {
@@ -269,13 +268,8 @@ var Update = function(now) {
   vectorArrow.forEach(sageata => {
     RenderMesh2D(arrow, sageata.getModelMatrix()); 
   });
-  // console.log('before');
-  // console.log(vectorArrow);
 
   vectorArrow = vectorArrow.filter(sageata => !sageata.isOutofScreen());
-  // console.log("after");
-  // console.log(vectorArrow)
-  
 
   //balon    
     timeToSpawnABallon -= deltaTime * 1.5;
@@ -313,40 +307,68 @@ var Update = function(now) {
     RenderMesh2D(shurikenSuprem, shuriken.getModelMatrix());
   });
 
-  //shurikene = shurikene.filter(sh => !sh.isOutofScreen);
-
- //console.log(window.screen);
+  shurikene = shurikene.filter(sh => !sh.isOutofScreen());
+  ;
 
  let i, j;
+ let arrow_radius = 0.7;
+ let scorPlayer;
+ let scorBaloane;
+ let scorShuriken;
+
+ for(j of shurikene) {
+   scorPlayer = 0;
+   var dx = arrow_x - j.x;
+   var dy = arrow_y - j.y;
+   var distance = Math.sqrt(dx * dx + dy * dy);
+   if (distance < arrow_radius + j.radius) {
+     j.hasCollided = true; 
+     scorPlayer = 1;
+    }
+    if (scorPlayer === 1) {
+      lifes -=1
+      console.log("You lost a life :(. You current number of lifes is: " + lifes);
+   }
+   if (lifes === 0 && scorPlayer == 1) {
+     console.log("Game over!");
+   }
+ }
+
  for (i of vectorArrow){
    for(j of baloane) {
-    console.log(i.radius);
+    scorBaloane = 0;
      var dx = i.x - j.x;
      var dy = i.y - j.y;
      var distance = Math.sqrt(dx * dx + dy * dy);
      if (distance < i.radius + j.radius) {
-      // ct ++;
-      j.hasCollided = true;
+       j.hasCollided = true;
+       i.collide = true; 
+       scorBaloane = 1;
+      }
+      if (scorBaloane == 1) {
+        ct ++;
+        console.log("You hit a balloon -> 1 point. Your current score is: " + ct);
      }
    }
  }
 
  for (i of vectorArrow){
   for(j of shurikene) {
-   console.log(i.radius);
+    scorShuriken = 0;
     var dx = i.x - j.x;
     var dy = i.y - j.y;
     var distance = Math.sqrt(dx * dx + dy * dy);
     if (distance < i.radius + j.radius) {
-     // ct ++;
-     j.hasCollided = true;
+      j.hasCollided = true;
+      i.collide = true; 
+      scorShuriken = 1;
+     }
+    if (scorShuriken == 1) {
+       ct += 2;
+       console.log("You hit a shuriken -> 2 point. Your current score is: " + ct);
     }
   }
-}
-
- //console.log(ct);
-  
-
+} 
   requestAnimationFrame(Update);
 }
 
