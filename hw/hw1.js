@@ -56,13 +56,16 @@ let vertices_line_baloon = [
   1, -2, 0
 ]
 
-let inidces_line_baloon = [0, 1, 2, 3, 4]
+let inidces_line_baloon = [0, 1, 2, 3, 4];
 
-const newArrow = (x, y, angle) => {
+let ct = 0;
+
+const newArrow = (x, y, angle, radius) => {
   let arrow = {};
   arrow.x = x;
   arrow.y = y;
   arrow.angle = angle;
+  arrow.radius = radius;
   arrow.getModelMatrix = () => {
     let modelMatrix = m3.identity();
     modelMatrix = m3.multiply(modelMatrix, Translate(arrow.x, arrow.y));
@@ -70,8 +73,15 @@ const newArrow = (x, y, angle) => {
     return modelMatrix;
   }
   arrow.update = (deltaTime) => {
-    arrow.x+= Math.cos(arrow.angle) * deltaTime;
-    arrow.y+=Math.sin(arrow.angle) * deltaTime;
+    arrow.x+= Math.cos(arrow.angle) * deltaTime * 6;
+    arrow.y+=Math.sin(arrow.angle) * deltaTime * 6;
+  }
+  arrow.isOutofScreen = () =>
+  {
+    if(arrow.x > window.screen.availWidth || arrow.y > window.screen.availHeight)
+      return true;
+    else
+      return false;   
   }
   return arrow;
 }
@@ -80,13 +90,14 @@ const newArrow = (x, y, angle) => {
 let baloane = [];
 let timeToSpawnABallon = 1;
 
-const addBalloon = (vectorBaloane, xSpawnPos) => {
+const addBalloon = (vectorBaloane, xSpawnPos, radius) => {
   let balon = {};
   let xScale = 0.8, yScale = 1;
   balon.xScale = xScale;
   balon.yScale = yScale;
   balon.x = xSpawnPos;
   balon.y = 0;
+  balon.radius = radius;
   balon.hasCollided = false;
   balon.getModelMatrix = (name) => {
     if(name === 'cerc'){
@@ -97,18 +108,18 @@ const addBalloon = (vectorBaloane, xSpawnPos) => {
     } else {
       let modelMatrix = m3.identity();
       modelMatrix = m3.multiply(modelMatrix,Translate(balon.x, balon.y - 0.3 ));
-      modelMatrix = m3.multiply(modelMatrix,Scale(balon.xScale - 0.65, balon.yScale - 0.65));
+      modelMatrix = m3.multiply(modelMatrix,Scale(xScale - 0.65, yScale - 0.65));
       return modelMatrix;  
     }
     // console.log(modelMatrix)
   }
-  balon.update = (deltaTimeSeconds) => {
+  balon.update = (deltaTimeSeconds, name) => {
     if(balon.hasCollided){
       if(balon.xScale <= 0) {
         balon.yScale = 0;  
       } else if (balon.xScale > 0) {   
          balon.xScale -= deltaTimeSeconds / 2;
-         balon.yScale -= deltaTimeSeconds / 4;
+         balon.yScale -= deltaTimeSeconds;
       }
       balon.y -= deltaTimeSeconds * 2;
     } else {
@@ -128,7 +139,7 @@ const addBalloon = (vectorBaloane, xSpawnPos) => {
 let shurikene = [];
 let timeToSpawnAShuriken = 1;
 
-const addShuriken = (vectorShurikene, ySpawnPos) => {
+const addShuriken = (vectorShurikene, ySpawnPos, radius) => {
   let shuriken = {};
   let xScale = yScale = 0.3;
   let defaultAngle = 1;
@@ -137,12 +148,13 @@ const addShuriken = (vectorShurikene, ySpawnPos) => {
   shuriken.x = 4;
   shuriken.y = ySpawnPos;
   shuriken.angle = defaultAngle; 
+  shuriken.radius = radius;
   shuriken.hasCollided = false;
   shuriken.getModelMatrix = () => {
     modelMaxtrix = m3.identity();
     modelMaxtrix = m3.multiply(modelMaxtrix,Translate(shuriken.x,shuriken.y));
     modelMaxtrix = m3.multiply(modelMaxtrix,Scale(shuriken.xScale, shuriken.yScale));
-    modelMaxtrix = m3.multiply(modelMaxtrix,Rotate(shuriken.angle));
+    modelMaxtrix = m3.multiply(modelMaxtrix,Rotate(shuriken.angle * 2));
     return modelMaxtrix
   }
   shuriken.update = (deltaTimeSeconds) => {
@@ -150,18 +162,20 @@ const addShuriken = (vectorShurikene, ySpawnPos) => {
       shuriken.xScale /= 2;
       shuriken.yScale /= 2;
     } else {
-      shuriken.x -= deltaTimeSeconds;
+      shuriken.x -= deltaTimeSeconds * 2;
       shuriken.angle += deltaTimeSeconds;
     }
   }
   shuriken.isOutofScreen = () => {
-    if (shuriken.x > 10 || shuriken.y < 4) 
+    if (shuriken.x > 30 || shuriken.y < 10) 
       return true;
     else 
       return false;
   }
   vectorShurikene.push(shuriken);
 }
+
+var circle_baloon 
 
 //arrow
 let arrow = new Mesh2DArrow('arrow', [0,0,0], vertices_arrow, indices_arrow);
@@ -244,9 +258,9 @@ var Update = function(now) {
 
   canvas.onmouseup = function (ev){
    let currentAngle = angularStep;
-   let nArrow = newArrow(arrow_x, arrow_y, currentAngle);
+   let nArrow = newArrow(arrow_x, arrow_y, currentAngle, 0.70);
    vectorArrow.push(nArrow);
-   console.log(vectorArrow);
+   //console.log(vectorArrow);
   }
 
   vectorArrow.forEach(arrow => {
@@ -255,7 +269,12 @@ var Update = function(now) {
   vectorArrow.forEach(sageata => {
     RenderMesh2D(arrow, sageata.getModelMatrix()); 
   });
-  //console.log(vectorArrow);
+  // console.log('before');
+  // console.log(vectorArrow);
+
+  vectorArrow = vectorArrow.filter(sageata => !sageata.isOutofScreen());
+  // console.log("after");
+  // console.log(vectorArrow)
   
 
   //balon    
@@ -263,7 +282,7 @@ var Update = function(now) {
     if(timeToSpawnABallon < 0) {
       let min = 1;
       let max = 10;
-      addBalloon(baloane, Math.floor(Math.random() * (max - min + 1) + min));
+      addBalloon(baloane, Math.floor(Math.random() * (max - min + 1) + min), 0.1);
       timeToSpawnABallon = 1;
     }
     
@@ -283,7 +302,7 @@ var Update = function(now) {
   if (timeToSpawnAShuriken < 0) {
     let min = -3;
     let max = 4;
-    addShuriken(shurikene, Math.floor(Math.random() * (max - min + 1) + min));
+    addShuriken(shurikene, Math.floor(Math.random() * (max - min + 1) + min), 0.05);
     timeToSpawnAShuriken = 1;
   }
   shurikene.forEach(sh => {
@@ -294,7 +313,39 @@ var Update = function(now) {
     RenderMesh2D(shurikenSuprem, shuriken.getModelMatrix());
   });
 
- // shurikene = shurikene.filter(shuriken => !shuriken.isOutofScreen);
+  //shurikene = shurikene.filter(sh => !sh.isOutofScreen);
+
+ //console.log(window.screen);
+
+ let i, j;
+ for (i of vectorArrow){
+   for(j of baloane) {
+    console.log(i.radius);
+     var dx = i.x - j.x;
+     var dy = i.y - j.y;
+     var distance = Math.sqrt(dx * dx + dy * dy);
+     if (distance < i.radius + j.radius) {
+      // ct ++;
+      j.hasCollided = true;
+     }
+   }
+ }
+
+ for (i of vectorArrow){
+  for(j of shurikene) {
+   console.log(i.radius);
+    var dx = i.x - j.x;
+    var dy = i.y - j.y;
+    var distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < i.radius + j.radius) {
+     // ct ++;
+     j.hasCollided = true;
+    }
+  }
+}
+
+ //console.log(ct);
+  
 
   requestAnimationFrame(Update);
 }
