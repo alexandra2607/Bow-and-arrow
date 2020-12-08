@@ -7,3 +7,21 @@ canvas {
   height: 100vh;
   display: block;
 }
+
+#score {
+	position: absolute;
+	top: 10px;
+	width: 100%;
+	text-align: left;
+	z-index: 100;
+	display:block;
+}
+
+#life {
+	position: absolute;
+	top: 10px;
+	width: 100%;
+	text-align: center;
+	z-index: 100;
+	display:block;
+}
