@@ -382,7 +382,7 @@ var Update = function(now) {
        console.log("You hit a shuriken -> 2 point. Your current score is: " + ct);
     }
     if (ct >= 10 && scorShuriken ==1) {
-      console("Congratulations, you won!")
+      console.log("Congratulations, you won!")
     }
   }
 } 
