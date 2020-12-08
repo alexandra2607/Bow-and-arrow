@@ -361,7 +361,8 @@ var Update = function(now) {
         console.log("You hit a balloon -> 1 point. Your current score is: " + ct);
      }
      if (ct >= 10 && scorBaloane ==1) {
-       console("Congratulations, you won!")
+       console.log("Congratulations, you won!");
+       ct = 0;
      }
    }
  }
